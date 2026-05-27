@@ -1,0 +1,83 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: ${APP_NAME:OrderService}
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRESQL_HOST:localhost}:${POSTGRESQL_PORT:54329}/${POSTGRESQL_DB:order_service}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:123456}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:none}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: auto_salon
+        show_sql: false
+        format_sql: false
+        jdbc.time_zone: UTC
+
+  liquibase:
+    enabled: ${LIQUIBASE_ENABLED:true}
+    change-log: classpath:db/db.changelog-master.yaml
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8000/realms/auto-salon}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8000/realms/auto-salon/protocol/openid-connect/certs}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:${spring.application.name}}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: org.example.commoncontracts.event
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+security:
+  keycloak:
+    client-id: ${KEYCLOAK_CLIENT_ID:auto-salon-api}
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-}]"
+
+grpc:
+  client:
+    storage-service:
+      address: static://${STORAGE_GRPC_HOST:localhost}:${STORAGE_GRPC_PORT:9090}
+      negotiationType: plaintext
+
+storage:
+  grpc:
+    timeout-millis: ${STORAGE_GRPC_TIMEOUT_MILLIS:2000}

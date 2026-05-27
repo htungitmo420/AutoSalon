@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package carinventory;
+
+option java_multiple_files = true;
+option java_package = "org.example.commoncontracts.grpc.car";
+option java_outer_classname = "CarInventoryProto";
+
+service CarInventoryService {
+  rpc GetAvailableCars(GetAvailableCarsRequest) returns (GetAvailableCarsResponse);
+  rpc GetAvailableCarById(GetAvailableCarByIdRequest) returns (GetAvailableCarByIdResponse);
+}
+
+message GetAvailableCarsRequest {
+}
+
+message GetAvailableCarsResponse {
+  repeated AvailableCar cars = 1;
+}
+
+message GetAvailableCarByIdRequest {
+  string id = 1;
+}
+
+message GetAvailableCarByIdResponse {
+  AvailableCar car = 1;
+}
+
+message AvailableCar {
+  string id = 1;
+  string model_id = 2;
+  string model_name = 3;
+  string brand = 4;
+  string body_type = 5;
+  string fuel_type = 6;
+  string color = 7;
+  string price = 8;
+}

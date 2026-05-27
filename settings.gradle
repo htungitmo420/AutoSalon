@@ -1,0 +1,5 @@
+rootProject.name = 'auto-salon'
+
+include 'common-contracts'
+include 'order-service'
+include 'storage-service'

@@ -1,0 +1,17 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: auto_salon
+  liquibase:
+    enabled: true
+  kafka:
+    listener:
+      auto-startup: false
+
+outbox:
+  publisher:
+    scheduling:
+      enabled: false

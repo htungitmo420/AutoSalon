@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-create-storage-tables
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/01-create-tables.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 02-storage-constraints-indexes
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/02-constraints-indexes.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 03-storage-seed-data
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/03-seed-data.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 04-outbox-events
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/04-outbox-events.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 05-processed-events
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/05-processed-events.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 06-inventory-reservations
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/06-inventory-reservations.sql
+            relativeToChangelogFile: true

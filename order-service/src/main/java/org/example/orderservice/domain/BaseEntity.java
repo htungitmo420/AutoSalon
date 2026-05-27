@@ -1,0 +1,47 @@
+package org.example.orderservice.domain;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@MappedSuperclass
+public abstract class BaseEntity {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(nullable = false, updatable = false)
+    private UUID id;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(nullable = false)
+    private Instant updatedAt;
+
+    @Column(nullable = false)
+    private boolean removed;
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
+}
