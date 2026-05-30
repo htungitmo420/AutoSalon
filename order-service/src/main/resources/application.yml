@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${POSTGRESQL_HOST:localhost}:${POSTGRESQL_PORT:54329}/${POSTGRESQL_DB:order_service}
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:123456}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -25,13 +25,6 @@ spring:
     enabled: ${LIQUIBASE_ENABLED:true}
     change-log: classpath:db/db.changelog-master.yaml
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8000/realms/auto-salon}
-          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8000/realms/auto-salon/protocol/openid-connect/certs}
-
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -46,6 +39,15 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: true
+
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SPRING_MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:false}
 
 springdoc:
   api-docs:
@@ -65,8 +67,44 @@ management:
       show-details: never
 
 security:
-  keycloak:
-    client-id: ${KEYCLOAK_CLIENT_ID:auto-salon-api}
+  jwt:
+    issuer: ${JWT_ISSUER:auto-salon}
+    audience: ${JWT_AUDIENCE:auto-salon-api}
+    secret: ${JWT_SECRET}
+    access-token-ttl-seconds: ${JWT_ACCESS_TOKEN_TTL_SECONDS:3600}
+  auth:
+    refresh-token-ttl-seconds: ${AUTH_REFRESH_TOKEN_TTL_SECONDS:2592000}
+    refresh-cookie:
+      name: ${AUTH_REFRESH_COOKIE_NAME:AUTO_SALON_REFRESH}
+      path: ${AUTH_REFRESH_COOKIE_PATH:/api/auth}
+      domain: ${AUTH_REFRESH_COOKIE_DOMAIN:}
+      secure: ${AUTH_REFRESH_COOKIE_SECURE:false}
+      same-site: ${AUTH_REFRESH_COOKIE_SAME_SITE:Strict}
+    password:
+      min-length: ${AUTH_PASSWORD_MIN_LENGTH:12}
+    password-reset:
+      token-ttl-seconds: ${AUTH_PASSWORD_RESET_TOKEN_TTL_SECONDS:900}
+      # On production set delivery-enabled=true
+      delivery-enabled: ${AUTH_PASSWORD_RESET_DELIVERY_ENABLED:false}
+      frontend-url: ${AUTH_PASSWORD_RESET_FRONTEND_URL:http://localhost:5173/reset-password}
+      mail-from: ${AUTH_PASSWORD_RESET_MAIL_FROM:no-reply@autosalon.local}
+    rate-limit:
+      max-attempts: ${AUTH_RATE_LIMIT_MAX_ATTEMPTS:10}
+      window-seconds: ${AUTH_RATE_LIMIT_WINDOW_SECONDS:900}
+      block-seconds: ${AUTH_RATE_LIMIT_BLOCK_SECONDS:900}
+    cleanup:
+      retention-seconds: ${AUTH_CLEANUP_RETENTION_SECONDS:604800}
+      fixed-delay-ms: ${AUTH_CLEANUP_FIXED_DELAY_MS:3600000}
+    trusted-proxy:
+      use-forwarded-for: ${AUTH_TRUSTED_PROXY_USE_FORWARDED_FOR:false}
+    bootstrap-admin:
+      enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:false}
+      email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:admin@autosalon.local}
+      password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+    max-age-seconds: ${CORS_MAX_AGE_SECONDS:3600}
 
 logging:
   pattern:

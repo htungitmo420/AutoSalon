@@ -82,7 +82,7 @@ class StorageKafkaE2EIT {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("storage_service")
             .withUsername("postgres")
-            .withPassword("123456");
+            .withPassword(UUID.randomUUID().toString());
 
     @Container
     static KafkaContainer kafka = new KafkaContainer(

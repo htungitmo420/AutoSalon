@@ -73,7 +73,7 @@ class RestApiIT {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("storage_service")
             .withUsername("postgres")
-            .withPassword("123456");
+            .withPassword(UUID.randomUUID().toString());
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
@@ -536,7 +536,7 @@ class RestApiIT {
         Map<String, Object> headers = Map.of("alg", "none");
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", userId.toString());
-        claims.put("realm_access", Map.of("roles", roles));
+        claims.put("roles", roles);
 
         return new Jwt(token, Instant.now(), Instant.now().plusSeconds(3600), headers, claims);
     }

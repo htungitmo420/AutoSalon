@@ -29,7 +29,7 @@ class UserProviderTest {
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
                 .subject("not-a-uuid")
-                .claim("realm_access", Map.of("roles", List.of("USER")))
+                .claim("roles", List.of("USER"))
                 .build();
 
         UsernamePasswordAuthenticationToken authentication =
@@ -42,7 +42,7 @@ class UserProviderTest {
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
                 .subject(userId.toString())
-                .claim("realm_access", Map.of("roles", List.of("USER")))
+                .claim("roles", List.of("USER"))
                 .build();
 
         return new UsernamePasswordAuthenticationToken(jwt, jwt, List.of());

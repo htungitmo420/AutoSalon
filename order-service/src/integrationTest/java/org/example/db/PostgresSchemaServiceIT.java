@@ -48,6 +48,11 @@ class PostgresSchemaServiceIT {
             "custom_car_orders",
             "test_drives",
             "custom_order_selected_parts",
+            "auth_users",
+            "auth_user_roles",
+            "auth_refresh_tokens",
+            "auth_password_reset_tokens",
+            "auth_rate_limits",
             "outbox_events",
             "processed_events"
     };
@@ -64,7 +69,7 @@ class PostgresSchemaServiceIT {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("order_service")
             .withUsername("postgres")
-            .withPassword("123456");
+            .withPassword(UUID.randomUUID().toString());
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
@@ -100,7 +105,7 @@ class PostgresSchemaServiceIT {
     @Test
     void liquibaseAppliesExpectedChangeSets() {
         assertAll(
-                () -> assertEquals(6, countRows("SELECT COUNT(*) FROM databasechangelog")),
+                () -> assertEquals(8, countRows("SELECT COUNT(*) FROM databasechangelog")),
                 () -> assertEquals(1, countRows(
                         "SELECT COUNT(*) FROM databasechangelog WHERE id = '01-create-tables'")),
                 () -> assertEquals(1, countRows(
@@ -112,7 +117,11 @@ class PostgresSchemaServiceIT {
                 () -> assertEquals(1, countRows(
                         "SELECT COUNT(*) FROM databasechangelog WHERE id = '05-processed-events'")),
                 () -> assertEquals(1, countRows(
-                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '06-reservation-reference'"))
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '06-reservation-reference'")),
+                () -> assertEquals(1, countRows(
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '07-auth-users'")),
+                () -> assertEquals(1, countRows(
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '08-production-identity'"))
         );
     }
 
@@ -174,7 +183,13 @@ class PostgresSchemaServiceIT {
                         SELECT COUNT(*) FROM pg_indexes
                         WHERE schemaname = ?
                            AND tablename = 'test_drives'
-                           AND indexname = 'idx_test_drives_car_id_start'""", SCHEMA))
+                           AND indexname = 'idx_test_drives_car_id_start'""", SCHEMA)),
+
+                () -> assertEquals(1, countRows("""
+                        SELECT COUNT(*) FROM pg_indexes
+                        WHERE schemaname = ?
+                           AND tablename = 'auth_users'
+                           AND indexname = 'uq_auth_users_email_active'""", SCHEMA))
         );
     }
 

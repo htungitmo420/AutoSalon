@@ -11,7 +11,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -51,7 +50,7 @@ class OrderSecurityEvaluatorTest {
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
                 .subject(userId.toString())
-                .claim("realm_access", Map.of("roles", List.of("USER")))
+                .claim("roles", List.of("USER"))
                 .build();
 
         return new UsernamePasswordAuthenticationToken(jwt, jwt, List.of());

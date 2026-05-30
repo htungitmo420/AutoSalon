@@ -82,7 +82,7 @@ class PostgresSchemaServiceIT {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("storage_service")
             .withUsername("postgres")
-            .withPassword("123456");
+            .withPassword(UUID.randomUUID().toString());
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {

@@ -2,9 +2,12 @@ package org.example.rest;
 
 import org.example.orderservice.OrderServiceApplication;
 import org.example.orderservice.application.client.InventoryReservationClient;
+import org.example.orderservice.application.dto.request.LoginRequest;
+import org.example.orderservice.application.dto.request.RegisterRequest;
 import org.example.orderservice.application.dto.request.BookTestDriveRequest;
 import org.example.orderservice.application.dto.request.CommonOrderRequest;
 import org.example.orderservice.application.dto.request.CustomOrderRequest;
+import org.example.orderservice.application.dto.response.AuthResponse;
 import org.example.orderservice.application.dto.response.CommonOrderResponse;
 import org.example.orderservice.application.dto.response.CustomOrderResponse;
 import org.example.orderservice.application.dto.response.InventoryReservationResponse;
@@ -67,7 +70,7 @@ class RestApiIT {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("order_service")
             .withUsername("postgres")
-            .withPassword("123456");
+            .withPassword(UUID.randomUUID().toString());
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
@@ -97,6 +100,40 @@ class RestApiIT {
                 .thenAnswer(invocation -> reservation(BigDecimal.valueOf(3420000)));
         when(inventoryReservationClient.confirmReservation(any(), any()))
                 .thenAnswer(invocation -> reservation(BigDecimal.valueOf(3420000)));
+    }
+
+    @Nested
+    @DisplayName("Auth")
+    class AuthTests {
+
+        @Test
+        void registerAndLogin() {
+            String email = "user-" + UUID.randomUUID() + "@example.com";
+            String password = UUID.randomUUID() + Character.toString('!') + "Aa1";
+
+            AuthResponse registered = webTestClient.post().uri("/api/auth/register")
+                    .bodyValue(new RegisterRequest(email, password, "Demo User"))
+                    .exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(AuthResponse.class)
+                    .returnResult().getResponseBody();
+
+            assertNotNull(registered);
+            assertEquals(email, registered.email());
+            assertEquals(List.of("USER"), registered.roles());
+            assertNotNull(registered.accessToken());
+
+            AuthResponse loggedIn = webTestClient.post().uri("/api/auth/login")
+                    .bodyValue(new LoginRequest(email, password))
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectBody(AuthResponse.class)
+                    .returnResult().getResponseBody();
+
+            assertNotNull(loggedIn);
+            assertEquals(registered.userId(), loggedIn.userId());
+            assertNotNull(loggedIn.accessToken());
+        }
     }
 
     @Nested
@@ -458,7 +495,7 @@ class RestApiIT {
         Map<String, Object> headers = Map.of("alg", "none");
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", userId.toString());
-        claims.put("realm_access", Map.of("roles", roles));
+        claims.put("roles", roles);
 
         return new Jwt(token, Instant.now(), Instant.now().plusSeconds(3600), headers, claims);
     }

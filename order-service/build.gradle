@@ -10,7 +10,6 @@ dependencies {
     // Test Containers
     testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
     testImplementation 'org.testcontainers:postgresql:1.21.4'
-    testImplementation 'com.github.dasniko:testcontainers-keycloak:3.8.0'
 
     // PostgreSQL
     testImplementation 'org.postgresql:postgresql:42.7.4'
@@ -37,6 +36,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
@@ -59,11 +59,6 @@ dependencies {
     implementation project(':common-contracts')
 }
 
-configurations {
-    integrationTestImplementation.extendsFrom testImplementation
-    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
-}
-
 sourceSets {
     integrationTest {
         java.srcDir file('src/integrationTest/java')
@@ -71,6 +66,11 @@ sourceSets {
         compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
         runtimeClasspath += output + compileClasspath
     }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 idea {
