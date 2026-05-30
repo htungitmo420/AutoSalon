@@ -62,3 +62,11 @@ databaseChangeLog:
         - sqlFile:
             path: migrations/08-production-identity.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 09-order-audit-logs
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/09-audit-logs.sql
+            relativeToChangelogFile: true

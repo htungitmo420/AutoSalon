@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/orders")
+@RequestMapping({"/api/orders", "/api/v1/orders"})
 @Tag(name = "Orders")
 public class OrderController {
 

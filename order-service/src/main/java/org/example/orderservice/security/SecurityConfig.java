@@ -41,6 +41,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtRolesConverter jwtRolesConverter;
+    private final RestSecurityProblemWriter restSecurityProblemWriter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -50,6 +51,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(restSecurityProblemWriter)
+                        .accessDeniedHandler(restSecurityProblemWriter))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",

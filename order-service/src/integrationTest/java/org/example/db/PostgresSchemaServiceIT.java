@@ -53,6 +53,7 @@ class PostgresSchemaServiceIT {
             "auth_refresh_tokens",
             "auth_password_reset_tokens",
             "auth_rate_limits",
+            "audit_logs",
             "outbox_events",
             "processed_events"
     };
@@ -105,7 +106,7 @@ class PostgresSchemaServiceIT {
     @Test
     void liquibaseAppliesExpectedChangeSets() {
         assertAll(
-                () -> assertEquals(8, countRows("SELECT COUNT(*) FROM databasechangelog")),
+                () -> assertEquals(9, countRows("SELECT COUNT(*) FROM databasechangelog")),
                 () -> assertEquals(1, countRows(
                         "SELECT COUNT(*) FROM databasechangelog WHERE id = '01-create-tables'")),
                 () -> assertEquals(1, countRows(
@@ -121,7 +122,9 @@ class PostgresSchemaServiceIT {
                 () -> assertEquals(1, countRows(
                         "SELECT COUNT(*) FROM databasechangelog WHERE id = '07-auth-users'")),
                 () -> assertEquals(1, countRows(
-                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '08-production-identity'"))
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '08-production-identity'")),
+                () -> assertEquals(1, countRows(
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '09-order-audit-logs'"))
         );
     }
 

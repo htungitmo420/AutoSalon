@@ -15,3 +15,10 @@ outbox:
   publisher:
     scheduling:
       enabled: false
+
+security:
+  jwt:
+    secret: ${random.uuid}${random.uuid}
+  auth:
+    bootstrap-admin:
+      enabled: false

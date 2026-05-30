@@ -2,6 +2,7 @@ package org.example.storageservice.application.mapper;
 
 import org.example.storageservice.application.dto.request.SaveAssemblyOrderRequest;
 import org.example.storageservice.application.dto.response.CarConfigurationResponse;
+import org.example.storageservice.application.dto.response.InventoryReservationResponse;
 import org.example.storageservice.domain.reservation.model.InventoryReservation;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Builder;
@@ -22,6 +23,9 @@ import java.util.UUID;
 public interface InventoryReservationMapper {
 
     InventoryReservationMapper INSTANCE = Mappers.getMapper(InventoryReservationMapper.class);
+
+    @Mapping(target = "requiredPartIds", source = "requiredPartIds", qualifiedByName = "readOnlyRequiredPartIds")
+    InventoryReservationResponse toInventoryReservationResponse(InventoryReservation reservation);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "orderId", source = "orderId")
@@ -61,5 +65,10 @@ public interface InventoryReservationMapper {
     @Named("mutableRequiredPartIds")
     default Map<String, UUID> toMutableRequiredPartIds(Map<String, UUID> requiredPartIds) {
         return requiredPartIds == null ? new HashMap<>() : new HashMap<>(requiredPartIds);
+    }
+
+    @Named("readOnlyRequiredPartIds")
+    default Map<String, UUID> toReadOnlyRequiredPartIds(Map<String, UUID> requiredPartIds) {
+        return requiredPartIds == null ? Map.of() : Map.copyOf(requiredPartIds);
     }
 }

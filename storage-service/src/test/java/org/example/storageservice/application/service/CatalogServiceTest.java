@@ -44,7 +44,7 @@ class CatalogServiceTest {
         PartRepository partRepository = new InMemoryPartRepository();
         carModelService = new CarModelService(carModelRepository, partRepository);
         carService = new CarService(carRepository, carModelRepository);
-        catalogService = new CatalogService(carRepository);
+        catalogService = new CatalogService(carRepository, carModelRepository, partRepository);
 
         model320i = createModel("320i", Brand.BMW, BodyType.SEDAN, FuelType.GASOLINE, 184, 2.0,
                 GearBoxType.AUTOMATIC, DrivetrainType.RWD, 3000000);

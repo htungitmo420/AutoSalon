@@ -22,7 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/test-drives")
+@RequestMapping({"/api/test-drives", "/api/v1/test-drives"})
 @Tag(name = "Test Drives")
 public class TestDriveController {
 

@@ -46,3 +46,11 @@ databaseChangeLog:
         - sqlFile:
             path: migrations/06-inventory-reservations.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 07-storage-audit-logs
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/07-audit-logs.sql
+            relativeToChangelogFile: true

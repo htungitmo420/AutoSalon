@@ -2,9 +2,14 @@ package org.example.storageservice.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.storageservice.application.mapper.CarMapper;
+import org.example.storageservice.application.mapper.PartMapper;
 import org.example.storageservice.application.dto.request.CarFilterRequest;
+import org.example.storageservice.application.dto.response.CarModelResponse;
 import org.example.storageservice.application.dto.response.CarResponse;
+import org.example.storageservice.application.dto.response.PartResponse;
+import org.example.storageservice.application.repository.CarModelRepository;
 import org.example.storageservice.application.repository.CarRepository;
+import org.example.storageservice.application.repository.PartRepository;
 import org.example.storageservice.domain.exceptions.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +26,8 @@ import java.util.UUID;
 public class CatalogService {
 
     private final CarRepository carRepository;
+    private final CarModelRepository carModelRepository;
+    private final PartRepository partRepository;
 
     @Transactional(readOnly = true)
     public CarResponse getCar(UUID carId) {
@@ -37,6 +44,34 @@ public class CatalogService {
         return carRepository.findAllByFilter(normalizedFilter).stream()
                 .map(CarMapper.INSTANCE::toCarResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CarModelResponse> listModels() {
+        return carModelRepository.findAll().stream()
+                .map(CarMapper.INSTANCE::toCarModelResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CarModelResponse getModel(UUID modelId) {
+        return CarMapper.INSTANCE.toCarModelResponse(
+                carModelRepository.findById(modelId)
+                        .orElseThrow(() -> new EntityNotFoundException("Car model not found: " + modelId)));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PartResponse> listParts() {
+        return partRepository.findAll().stream()
+                .map(PartMapper.INSTANCE::toPartResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PartResponse getPart(UUID partId) {
+        return PartMapper.INSTANCE.toPartResponse(
+                partRepository.findById(partId)
+                        .orElseThrow(() -> new EntityNotFoundException("Part not found: " + partId)));
     }
 
     private CarFilterRequest applyBusinessRules(CarFilterRequest filter) {

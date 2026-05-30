@@ -67,6 +67,7 @@ class PostgresSchemaServiceIT {
             "assembly_order_required_parts",
             "inventory_reservations",
             "reservation_required_parts",
+            "audit_logs",
             "outbox_events",
             "processed_events"
     };
@@ -118,7 +119,7 @@ class PostgresSchemaServiceIT {
     @Test
     void liquibaseAppliesExpectedChangeSets() {
         assertAll(
-                () -> assertEquals(6, countRows("SELECT COUNT(*) FROM databasechangelog")),
+                () -> assertEquals(7, countRows("SELECT COUNT(*) FROM databasechangelog")),
                 () -> assertEquals(1, countRows(
                         "SELECT COUNT(*) FROM databasechangelog WHERE id = '01-create-storage-tables'")),
                 () -> assertEquals(1, countRows(
@@ -130,7 +131,9 @@ class PostgresSchemaServiceIT {
                 () -> assertEquals(1, countRows(
                         "SELECT COUNT(*) FROM databasechangelog WHERE id = '05-processed-events'")),
                 () -> assertEquals(1, countRows(
-                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '06-inventory-reservations'"))
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '06-inventory-reservations'")),
+                () -> assertEquals(1, countRows(
+                        "SELECT COUNT(*) FROM databasechangelog WHERE id = '07-storage-audit-logs'"))
         );
     }
 

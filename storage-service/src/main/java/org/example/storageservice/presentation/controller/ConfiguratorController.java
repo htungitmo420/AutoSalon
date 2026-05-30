@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.storageservice.application.dto.request.CarConfigurationRequest;
 import org.example.storageservice.application.dto.response.CarConfigurationResponse;
 import org.example.storageservice.application.service.ConfiguratorService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,9 +15,8 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/configurator")
+@RequestMapping({"/api/configurator", "/api/v1/configurator"})
 @Tag(name = "Configurator")
-@PreAuthorize("hasAnyRole('USER', 'MANAGER', 'WAREHOUSE_ADMIN', 'ADMIN')")
 public class ConfiguratorController {
 
 	private final ConfiguratorService configuratorService;
