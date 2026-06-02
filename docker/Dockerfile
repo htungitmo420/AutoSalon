@@ -4,7 +4,8 @@ ARG SERVICE_MODULE
 WORKDIR /workspace
 COPY . .
 RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
-RUN ./gradlew :${SERVICE_MODULE}:bootJar -x test
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
+    ./gradlew :${SERVICE_MODULE}:bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 

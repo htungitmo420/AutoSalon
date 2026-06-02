@@ -1,33 +1,24 @@
-package org.example.orderservice.security;
+package org.example.apigateway.security;
 
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimValidator;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -36,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -44,54 +34,50 @@ public class SecurityConfig {
     private final RestSecurityProblemWriter restSecurityProblemWriter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity httpSecurity,
-            CorsConfigurationSource corsConfigurationSource) throws Exception {
-        httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
+    public SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity httpSecurity,
+            CorsConfigurationSource corsConfigurationSource) {
+        return httpSecurity
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(restSecurityProblemWriter)
                         .accessDeniedHandler(restSecurityProblemWriter))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
+                .authorizeExchange(authorize -> authorize
+                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                        .pathMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/auth/password-reset/request",
                                 "/api/auth/password-reset/confirm",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/api-docs/**",
-                                "/v3/api-docs/**",
+                                "/api/v1/catalog/**",
+                                "/api/v1/configurator/**",
                                 "/actuator/health",
                                 "/actuator/prometheus"
                         ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .pathMatchers("/api/v1/admin/inventory/**", "/api/v1/admin/fulfillment/**")
+                        .hasAnyRole("WAREHOUSE_ADMIN", "ADMIN")
+                        .pathMatchers("/api/v1/admin/orders/**", "/api/v1/admin/test-drives/**")
+                        .hasAnyRole("MANAGER", "ADMIN")
+                        .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable);
-
-        return httpSecurity.build();
+                        .authenticationEntryPoint(restSecurityProblemWriter)
+                        .accessDeniedHandler(restSecurityProblemWriter)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtRolesConverter)))
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .build();
     }
 
     @Bean
-    public Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(jwtRolesConverter);
-        return converter;
-    }
-
-    @Bean
-    public JwtDecoder jwtDecoder(
+    public ReactiveJwtDecoder reactiveJwtDecoder(
             @Value("${security.jwt.secret}") String secret,
             @Value("${security.jwt.issuer}") String issuer,
             @Value("${security.jwt.audience}") String audience) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey(secret))
+        NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withSecretKey(secretKey(secret))
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
@@ -99,16 +85,6 @@ public class SecurityConfig {
                 new JwtClaimValidator<List<String>>("aud", claim -> claim != null && claim.contains(audience));
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience));
         return decoder;
-    }
-
-    @Bean
-    public JwtEncoder jwtEncoder(@Value("${security.jwt.secret}") String secret) {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey(secret)));
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     @Bean
