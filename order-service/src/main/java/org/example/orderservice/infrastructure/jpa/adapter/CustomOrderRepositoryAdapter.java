@@ -52,4 +52,9 @@ public class CustomOrderRepositoryAdapter implements CustomOrderRepository {
     public boolean existsByIdAndCustomerId(UUID orderId, UUID customerId) {
         return delegate.existsByIdAndCustomerIdAndRemovedFalse(orderId, customerId);
     }
+
+    @Override
+    public Optional<CustomCarOrder> findByCartId(UUID cartId) {
+        return delegate.findByCartIdAndRemovedFalse(cartId);
+    }
 }

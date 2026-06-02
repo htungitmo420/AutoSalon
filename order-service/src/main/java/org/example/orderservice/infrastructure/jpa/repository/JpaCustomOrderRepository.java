@@ -16,4 +16,6 @@ public interface JpaCustomOrderRepository extends JpaRepository<CustomCarOrder, 
 	List<CustomCarOrder> findAllByCustomerIdAndRemovedFalse(UUID customerId);
 
 	boolean existsByIdAndCustomerIdAndRemovedFalse(UUID id, UUID customerId);
+
+	Optional<CustomCarOrder> findByCartIdAndRemovedFalse(UUID cartId);
 }

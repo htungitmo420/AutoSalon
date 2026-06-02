@@ -1,0 +1,57 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  application:
+    name: ${APP_NAME:CartService}
+  datasource:
+    url: jdbc:postgresql://${POSTGRESQL_HOST:localhost}:${POSTGRESQL_PORT:54331}/${POSTGRESQL_DB:cart_service}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:none}
+    properties:
+      hibernate:
+        default_schema: auto_salon
+        jdbc.time_zone: UTC
+  liquibase:
+    enabled: ${LIQUIBASE_ENABLED:true}
+    change-log: classpath:db/db.changelog-master.yaml
+
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:auto-salon}
+    audience: ${JWT_AUDIENCE:auto-salon-api}
+    secret: ${JWT_SECRET}
+
+cart:
+  expiration:
+    fixed-delay-ms: ${CART_EXPIRATION_FIXED_DELAY_MS:60000}
+
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9091}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-}]"

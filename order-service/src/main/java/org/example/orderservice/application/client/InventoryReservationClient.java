@@ -14,4 +14,6 @@ public interface InventoryReservationClient {
                                                       Instant expiresAt);
 
     InventoryReservationResponse confirmReservation(UUID orderId, UUID reservationId);
+
+    InventoryReservationResponse releaseReservation(UUID orderId, UUID reservationId, String reason);
 }

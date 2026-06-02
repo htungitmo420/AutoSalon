@@ -2,5 +2,6 @@ rootProject.name = 'auto-salon'
 
 include 'common-contracts'
 include 'api-gateway'
+include 'cart-service'
 include 'order-service'
 include 'storage-service'

@@ -36,6 +36,10 @@ spring:
           uri: ${ORDER_SERVICE_URL:http://localhost:8080}
           predicates:
             - Path=/api/v1/orders/**,/api/v1/test-drives/**
+        - id: customer-cart
+          uri: ${CART_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/cart/**
         - id: admin-inventory
           uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
           predicates:
@@ -50,6 +54,8 @@ services:
     health-url: ${ORDER_SERVICE_HEALTH_URL:http://localhost:8080/actuator/health}
   storage:
     health-url: ${STORAGE_SERVICE_HEALTH_URL:http://localhost:8081/actuator/health}
+  cart:
+    health-url: ${CART_SERVICE_HEALTH_URL:http://localhost:8083/actuator/health}
   health-timeout-millis: ${DOWNSTREAM_HEALTH_TIMEOUT_MILLIS:1000}
 
 security:

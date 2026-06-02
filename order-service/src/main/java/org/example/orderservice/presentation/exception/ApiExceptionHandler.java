@@ -1,6 +1,7 @@
 package org.example.orderservice.presentation.exception;
 
 import org.example.orderservice.application.exception.StorageServiceUnavailableException;
+import org.example.orderservice.application.exception.CartServiceUnavailableException;
 import org.example.orderservice.application.exception.InvalidAuthTokenException;
 import org.example.orderservice.application.exception.InvalidCredentialsException;
 import org.example.orderservice.application.exception.RateLimitExceededException;
@@ -40,6 +41,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ProblemDetail> handleStorageServiceUnavailable(StorageServiceUnavailableException ex) {
         return buildProblem(HttpStatus.SERVICE_UNAVAILABLE, "DEPENDENCY_UNAVAILABLE",
                 "Storage service unavailable", ex.getMessage());
+    }
+
+    @ExceptionHandler(CartServiceUnavailableException.class)
+    public ResponseEntity<ProblemDetail> handleCartServiceUnavailable(CartServiceUnavailableException ex) {
+        return buildProblem(HttpStatus.SERVICE_UNAVAILABLE, "DEPENDENCY_UNAVAILABLE",
+                "Cart service unavailable", ex.getMessage());
     }
 
     @ExceptionHandler({InvalidAuthTokenException.class, InvalidCredentialsException.class})

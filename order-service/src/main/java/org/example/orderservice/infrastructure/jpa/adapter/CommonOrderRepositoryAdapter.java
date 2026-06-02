@@ -52,4 +52,9 @@ public class CommonOrderRepositoryAdapter implements CommonOrderRepository {
     public boolean existsByIdAndCustomerId(UUID orderId, UUID customerId) {
         return delegate.existsByIdAndCustomerIdAndRemovedFalse(orderId, customerId);
     }
+
+    @Override
+    public Optional<CommonCarOrder> findByCartId(UUID cartId) {
+        return delegate.findByCartIdAndRemovedFalse(cartId);
+    }
 }

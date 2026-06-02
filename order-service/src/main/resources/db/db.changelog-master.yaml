@@ -70,3 +70,11 @@ databaseChangeLog:
         - sqlFile:
             path: migrations/09-audit-logs.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 10-cart-checkout-reference
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/10-cart-checkout-reference.sql
+            relativeToChangelogFile: true

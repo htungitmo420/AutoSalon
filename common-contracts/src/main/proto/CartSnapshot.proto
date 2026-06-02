@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package cartsnapshot;
+
+option java_multiple_files = true;
+option java_package = "org.example.commoncontracts.grpc.cart";
+option java_outer_classname = "CartSnapshotProto";
+
+service CartSnapshotService {
+  rpc LockCart(LockCartRequest) returns (CartSnapshotResponse);
+  rpc MarkCartCheckedOut(CartCommandRequest) returns (CartSnapshotResponse);
+  rpc ReleaseCart(CartCommandRequest) returns (CartSnapshotResponse);
+}
+
+message LockCartRequest {
+  string cart_id = 1;
+  string customer_id = 2;
+  string trace_id = 3;
+}
+
+message CartCommandRequest {
+  string cart_id = 1;
+  string customer_id = 2;
+  string trace_id = 3;
+}
+
+message CartSnapshotResponse {
+  string cart_id = 1;
+  string customer_id = 2;
+  string status = 3;
+  string item_type = 4;
+  string car_id = 5;
+  string model_id = 6;
+  map<string, string> selected_part_ids = 7;
+  string quoted_price = 8;
+  string quote_expires_at = 9;
+  int64 version = 10;
+}

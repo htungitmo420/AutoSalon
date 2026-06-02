@@ -33,6 +33,9 @@ public class CommonCarOrder extends BaseEntity {
     @Column(name = "reservation_id")
     private UUID reservationId;
 
+    @Column(name = "cart_id")
+    private UUID cartId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CommonOrderStatus status;

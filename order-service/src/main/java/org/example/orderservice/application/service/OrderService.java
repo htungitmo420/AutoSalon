@@ -1,9 +1,13 @@
 package org.example.orderservice.application.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.orderservice.application.client.CartSnapshotClient;
 import org.example.orderservice.application.client.InventoryReservationClient;
+import org.example.orderservice.application.dto.request.CartCheckoutRequest;
 import org.example.orderservice.application.dto.request.CommonOrderRequest;
 import org.example.orderservice.application.dto.request.CustomOrderRequest;
+import org.example.orderservice.application.dto.response.CartCheckoutResponse;
+import org.example.orderservice.application.dto.response.CartSnapshotResponse;
 import org.example.orderservice.application.dto.response.CommonOrderResponse;
 import org.example.orderservice.application.dto.response.CustomOrderResponse;
 import org.example.orderservice.application.dto.response.InventoryReservationResponse;
@@ -25,8 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,6 +43,7 @@ public class OrderService {
     private final CustomOrderRepository customOrderRepository;
     private final CurrentUserProvider currentUserProvider;
     private final InventoryReservationClient inventoryReservationClient;
+    private final CartSnapshotClient cartSnapshotClient;
     private final OrderWorkflowEventPublisher eventPublisher;
 
     @Value("${order.reservation.ttl-minutes:15}")
@@ -45,11 +52,17 @@ public class OrderService {
     @Transactional
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public CommonOrderResponse placeCommonOrder(CommonOrderRequest request) {
+        return placeCommonOrder(request, null, null);
+    }
+
+    private CommonOrderResponse placeCommonOrder(CommonOrderRequest request, UUID cartId, BigDecimal quotedPrice) {
         CommonCarOrder order = OrderMapper.INSTANCE.toCommonCarOrder(request, currentUserProvider.getCurrentUserId());
+        order.setCartId(cartId);
         order = commonOrderRepository.save(order);
         try {
             InventoryReservationResponse reservation = inventoryReservationClient.reserveStockCar(
                     order.getId(), order.getCarId(), reservationExpiry());
+            validateQuotedPrice(order.getId(), reservation, quotedPrice);
             order.setReservationId(reservation.reservationId());
             order.setStatus(CommonOrderStatus.WAITING_FOR_PAYMENT);
             CommonCarOrder saved = commonOrderRepository.save(order);
@@ -57,6 +70,9 @@ public class OrderService {
                     saved.getId(), saved.getReservationId(), reservation.totalPrice());
             return OrderMapper.INSTANCE.toCommonOrderResponse(saved);
         } catch (DomainValidationException ex) {
+            if (cartId != null) {
+                throw ex;
+            }
             order.setStatus(CommonOrderStatus.REJECTED);
             return OrderMapper.INSTANCE.toCommonOrderResponse(commonOrderRepository.save(order));
         }
@@ -88,13 +104,19 @@ public class OrderService {
     @Transactional
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public CustomOrderResponse placeCustomOrder(CustomOrderRequest request) {
+        return placeCustomOrder(request, null, null);
+    }
+
+    private CustomOrderResponse placeCustomOrder(CustomOrderRequest request, UUID cartId, BigDecimal quotedPrice) {
         Map<String, UUID> selectedPartIds = normalizeSelectedPartIds(request.selectedPartIds());
         CustomCarOrder order = OrderMapper.INSTANCE.toCustomCarOrder(
                 request, request.modelId(), currentUserProvider.getCurrentUserId(), selectedPartIds, null);
+        order.setCartId(cartId);
         order = customOrderRepository.save(order);
         try {
             InventoryReservationResponse reservation = inventoryReservationClient.reserveConfiguration(
                     order.getId(), order.getModelId(), selectedPartIds, reservationExpiry());
+            validateQuotedPrice(order.getId(), reservation, quotedPrice);
             order.setReservationId(reservation.reservationId());
             order.setTotalPrice(reservation.totalPrice());
             order.setStatus(CustomOrderStatus.WAITING_FOR_PAYMENT);
@@ -103,8 +125,45 @@ public class OrderService {
                     saved.getId(), saved.getReservationId(), saved.getTotalPrice());
             return OrderMapper.INSTANCE.toCustomOrderResponse(saved);
         } catch (DomainValidationException ex) {
+            if (cartId != null) {
+                throw ex;
+            }
             order.setStatus(CustomOrderStatus.REJECTED);
             return OrderMapper.INSTANCE.toCustomOrderResponse(customOrderRepository.save(order));
+        }
+    }
+
+    @Transactional
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public CartCheckoutResponse checkoutCart(CartCheckoutRequest request) {
+        if (request.cartId() == null) {
+            throw new DomainValidationException("cartId is required");
+        }
+        UUID customerId = currentUserProvider.getCurrentUserId();
+        CartSnapshotResponse snapshot = cartSnapshotClient.lockCart(request.cartId(), customerId);
+        try {
+            Optional<CartCheckoutResponse> existingCheckout = findExistingCheckout(request.cartId());
+            if (existingCheckout.isPresent()) {
+                cartSnapshotClient.markCheckedOut(request.cartId(), customerId);
+                return existingCheckout.get();
+            }
+            validateSnapshotOwner(snapshot, customerId);
+            CartCheckoutResponse response = switch (snapshot.itemType()) {
+                case "STOCK_CAR" -> CartCheckoutResponse.stockCar(snapshot.cartId(), placeCommonOrder(
+                        new CommonOrderRequest(snapshot.carId(), customerId),
+                        snapshot.cartId(),
+                        snapshot.quotedPrice()));
+                case "CONFIGURED_CAR" -> CartCheckoutResponse.configuredCar(snapshot.cartId(), placeCustomOrder(
+                        new CustomOrderRequest(snapshot.modelId(), customerId, snapshot.selectedPartIds()),
+                        snapshot.cartId(),
+                        snapshot.quotedPrice()));
+                default -> throw new DomainValidationException("Unsupported cart item type: " + snapshot.itemType());
+            };
+            cartSnapshotClient.markCheckedOut(snapshot.cartId(), customerId);
+            return response;
+        } catch (RuntimeException exception) {
+            releaseCartAfterFailure(request.cartId(), customerId, exception);
+            throw exception;
         }
     }
 
@@ -330,6 +389,42 @@ public class OrderService {
 
     private Instant reservationExpiry() {
         return Instant.now().plus(reservationTtlMinutes, ChronoUnit.MINUTES);
+    }
+
+    private Optional<CartCheckoutResponse> findExistingCheckout(UUID cartId) {
+        Optional<CommonCarOrder> commonOrder = commonOrderRepository.findByCartId(cartId);
+        if (commonOrder.isPresent()) {
+            return Optional.of(CartCheckoutResponse.stockCar(
+                    cartId, OrderMapper.INSTANCE.toCommonOrderResponse(commonOrder.get())));
+        }
+        return customOrderRepository.findByCartId(cartId)
+                .map(order -> CartCheckoutResponse.configuredCar(
+                        cartId, OrderMapper.INSTANCE.toCustomOrderResponse(order)));
+    }
+
+    private void validateSnapshotOwner(CartSnapshotResponse snapshot, UUID customerId) {
+        if (!snapshot.customerId().equals(customerId)) {
+            throw new DomainValidationException("Cart snapshot does not belong to current user");
+        }
+    }
+
+    private void validateQuotedPrice(UUID orderId, InventoryReservationResponse reservation, BigDecimal quotedPrice) {
+        if (quotedPrice == null) {
+            return;
+        }
+        if (reservation.totalPrice() == null || quotedPrice.compareTo(reservation.totalPrice()) != 0) {
+            inventoryReservationClient.releaseReservation(
+                    orderId, reservation.reservationId(), "Cart quote changed before checkout");
+            throw new DomainValidationException("Cart quote has changed; refresh cart before checkout");
+        }
+    }
+
+    private void releaseCartAfterFailure(UUID cartId, UUID customerId, RuntimeException originalException) {
+        try {
+            cartSnapshotClient.releaseCart(cartId, customerId);
+        } catch (RuntimeException releaseException) {
+            originalException.addSuppressed(releaseException);
+        }
     }
 
     private void validateReservationId(UUID reservationId) {

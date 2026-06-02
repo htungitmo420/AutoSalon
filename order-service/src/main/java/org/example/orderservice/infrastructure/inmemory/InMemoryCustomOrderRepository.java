@@ -51,4 +51,11 @@ public class InMemoryCustomOrderRepository implements CustomOrderRepository {
                 .map(order -> customerId.equals(order.getCustomerId()))
                 .orElse(false);
     }
+
+    @Override
+    public Optional<CustomCarOrder> findByCartId(UUID cartId) {
+        return storage.values().stream()
+                .filter(order -> cartId.equals(order.getCartId()))
+                .findFirst();
+    }
 }

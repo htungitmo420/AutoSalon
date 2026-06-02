@@ -61,6 +61,17 @@ public class StorageReservationGrpcClient implements InventoryReservationClient 
         }
     }
 
+    @Override
+    public InventoryReservationResponse releaseReservation(UUID orderId, UUID reservationId, String reason) {
+        try {
+            return StorageReservationGrpcMapper.toResponse(storageStub.withDeadlineAfter(timeoutMillis, TimeUnit.MILLISECONDS)
+                    .releaseReservation(StorageReservationGrpcMapper.toReleaseReservationRequest(
+                            orderId, reservationId, reason, TraceContext.currentTraceId())));
+        } catch (StatusRuntimeException ex) {
+            throw mapException(ex, "Failed to release reservation");
+        }
+    }
+
     private RuntimeException mapException(StatusRuntimeException ex, String fallbackMessage) {
         Status status = ex.getStatus();
         String description = status.getDescription() == null ? fallbackMessage : status.getDescription();

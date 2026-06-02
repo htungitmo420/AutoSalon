@@ -4,6 +4,7 @@ import org.example.commoncontracts.grpc.reservation.ConfirmReservationRequest;
 import org.example.commoncontracts.grpc.reservation.ReservationResponse;
 import org.example.commoncontracts.grpc.reservation.ReserveConfigurationRequest;
 import org.example.commoncontracts.grpc.reservation.ReserveStockCarRequest;
+import org.example.commoncontracts.grpc.reservation.ReleaseReservationRequest;
 import org.example.orderservice.application.dto.response.InventoryReservationResponse;
 
 import java.math.BigDecimal;
@@ -45,6 +46,16 @@ public final class StorageReservationGrpcMapper {
         return ConfirmReservationRequest.newBuilder()
                 .setOrderId(orderId.toString())
                 .setReservationId(reservationId.toString())
+                .setTraceId(traceId)
+                .build();
+    }
+
+    public static ReleaseReservationRequest toReleaseReservationRequest(
+            UUID orderId, UUID reservationId, String reason, String traceId) {
+        return ReleaseReservationRequest.newBuilder()
+                .setOrderId(orderId.toString())
+                .setReservationId(reservationId.toString())
+                .setReason(reason)
                 .setTraceId(traceId)
                 .build();
     }

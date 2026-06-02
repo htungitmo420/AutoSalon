@@ -3,7 +3,9 @@ package org.example.orderservice.presentation.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.orderservice.application.dto.request.CommonOrderRequest;
+import org.example.orderservice.application.dto.request.CartCheckoutRequest;
 import org.example.orderservice.application.dto.request.CustomOrderRequest;
+import org.example.orderservice.application.dto.response.CartCheckoutResponse;
 import org.example.orderservice.application.dto.response.CommonOrderResponse;
 import org.example.orderservice.application.dto.response.CustomOrderResponse;
 import org.example.orderservice.application.service.OrderService;
@@ -29,6 +31,13 @@ import java.util.UUID;
 public class OrderController {
 
 	private final OrderService orderService;
+
+	@PostMapping("/checkout")
+	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+	public CartCheckoutResponse checkout(@RequestBody CartCheckoutRequest request) {
+		return orderService.checkoutCart(request);
+	}
 
 	@PostMapping("/common")
 	@ResponseStatus(HttpStatus.CREATED)

@@ -16,4 +16,6 @@ public interface JpaCommonOrderRepository extends JpaRepository<CommonCarOrder, 
 	List<CommonCarOrder> findAllByCustomerIdAndRemovedFalse(UUID customerId);
 
 	boolean existsByIdAndCustomerIdAndRemovedFalse(UUID id, UUID customerId);
+
+	Optional<CommonCarOrder> findByCartIdAndRemovedFalse(UUID cartId);
 }

@@ -124,7 +124,14 @@ grpc:
     storage-service:
       address: static://${STORAGE_GRPC_HOST:localhost}:${STORAGE_GRPC_PORT:9090}
       negotiationType: plaintext
+    cart-service:
+      address: static://${CART_GRPC_HOST:localhost}:${CART_GRPC_PORT:9091}
+      negotiationType: plaintext
 
 storage:
   grpc:
     timeout-millis: ${STORAGE_GRPC_TIMEOUT_MILLIS:2000}
+
+cart:
+  grpc:
+    timeout-millis: ${CART_GRPC_TIMEOUT_MILLIS:2000}
