@@ -9,6 +9,7 @@ public record OrderAwaitingPaymentEvent(
         UUID eventId,
         int eventVersion,
         UUID orderId,
+        UUID customerId,
         OrderType orderType,
         UUID reservationId,
         String totalPrice,

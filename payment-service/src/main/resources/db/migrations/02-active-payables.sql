@@ -1,0 +1,2 @@
+ALTER TABLE auto_salon.payable_references
+    ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;

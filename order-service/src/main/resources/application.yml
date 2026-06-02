@@ -11,11 +11,11 @@ spring:
     password: ${DB_PASSWORD}
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: ${DB_DDL_AUTO:none}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: auto_salon
         show_sql: false
         format_sql: false
@@ -120,6 +120,8 @@ logging:
     level: "%5p [traceId=%X{traceId:-}]"
 
 grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9094}
   client:
     storage-service:
       address: static://${STORAGE_GRPC_HOST:localhost}:${STORAGE_GRPC_PORT:9090}

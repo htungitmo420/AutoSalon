@@ -1,0 +1,79 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  application:
+    name: ${APP_NAME:PaymentService}
+  datasource:
+    url: jdbc:postgresql://${POSTGRESQL_HOST:localhost}:${POSTGRESQL_PORT:54332}/${POSTGRESQL_DB:payment_service}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:none}
+    properties:
+      hibernate:
+        default_schema: auto_salon
+        jdbc.time_zone: UTC
+  liquibase:
+    enabled: ${LIQUIBASE_ENABLED:true}
+    change-log: classpath:db/db.changelog-master.yaml
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:${spring.application.name}}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: org.example.commoncontracts.event
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+
+payment:
+  provider: ${PAYMENT_PROVIDER:mock}
+  currency: ${PAYMENT_CURRENCY:vnd}
+  currency-decimal-places: ${PAYMENT_CURRENCY_DECIMAL_PLACES:0}
+  deposit-percent: ${PAYMENT_DEPOSIT_PERCENT:10}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:auto-salon}
+    audience: ${JWT_AUDIENCE:auto-salon-api}
+    secret: ${JWT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-}]"
+
+grpc:
+  client:
+    order-service:
+      address: static://${ORDER_GRPC_HOST:localhost}:${ORDER_GRPC_PORT:9094}
+      negotiationType: plaintext
+
+order:
+  grpc:
+    timeout-millis: ${ORDER_GRPC_TIMEOUT_MILLIS:2000}

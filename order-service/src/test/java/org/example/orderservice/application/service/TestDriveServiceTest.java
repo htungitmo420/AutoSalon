@@ -1,8 +1,10 @@
 package org.example.orderservice.application.service;
 
 import org.example.orderservice.application.dto.request.BookTestDriveRequest;
+import org.example.orderservice.application.dto.request.QuoteTestDriveRequest;
 import org.example.orderservice.application.dto.response.TestDriveResponse;
 import org.example.orderservice.application.port.out.CurrentUserProvider;
+import org.example.orderservice.application.port.out.OrderWorkflowEventPublisher;
 import org.example.orderservice.domain.exceptions.DomainValidationException;
 import org.example.orderservice.domain.exceptions.EntityNotFoundException;
 import org.example.orderservice.domain.testdrive.enums.TestDriveStatus;
@@ -34,7 +36,10 @@ class TestDriveServiceTest {
         when(currentUserProvider.getCurrentUserId()).thenReturn(CUSTOMER_ID);
         when(currentUserProvider.hasElevatedReadAccess()).thenReturn(false);
 
-        testDriveService = new TestDriveService(new InMemoryTestDriveRepository(), currentUserProvider);
+        testDriveService = new TestDriveService(
+                new InMemoryTestDriveRepository(),
+                currentUserProvider,
+                mock(OrderWorkflowEventPublisher.class));
     }
 
     private TestDriveResponse book(UUID carId, LocalDateTime dateTime) {
@@ -103,7 +108,11 @@ class TestDriveServiceTest {
     void statusTransitions_confirmAndComplete() {
         TestDriveResponse testDrive = book(CAR_ID, TOMORROW);
 
-        testDrive = testDriveService.confirmTestDrive(testDrive.id());
+        testDrive = testDriveService.quoteTestDrive(testDrive.id(), new QuoteTestDriveRequest(java.math.BigDecimal.TEN));
+        assertEquals(TestDriveStatus.WAITING_FOR_PAYMENT, testDrive.status());
+
+        testDriveService.handlePaymentSucceeded(testDrive.id());
+        testDrive = testDriveService.getTestDrive(testDrive.id());
         assertEquals(TestDriveStatus.CONFIRMED, testDrive.status());
 
         testDrive = testDriveService.completeTestDrive(testDrive.id());

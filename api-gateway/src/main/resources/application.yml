@@ -16,38 +16,44 @@ spring:
         composite-indicator:
           enabled: false
     gateway:
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            key-resolver: "#{@userOrIpKeyResolver}"
-            redis-rate-limiter.replenishRate: ${GATEWAY_RATE_LIMIT_REPLENISH_RATE:20}
-            redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_LIMIT_BURST_CAPACITY:40}
-            redis-rate-limiter.requestedTokens: 1
-      routes:
-        - id: auth
-          uri: ${ORDER_SERVICE_URL:http://localhost:8080}
-          predicates:
-            - Path=/api/auth/**
-        - id: public-catalog
-          uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/v1/catalog/**,/api/v1/configurator/**
-        - id: customer-orders
-          uri: ${ORDER_SERVICE_URL:http://localhost:8080}
-          predicates:
-            - Path=/api/v1/orders/**,/api/v1/test-drives/**
-        - id: customer-cart
-          uri: ${CART_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/v1/cart/**
-        - id: admin-inventory
-          uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/v1/admin/inventory/**,/api/v1/admin/fulfillment/**
-        - id: admin-orders
-          uri: ${ORDER_SERVICE_URL:http://localhost:8080}
-          predicates:
-            - Path=/api/v1/admin/orders/**,/api/v1/admin/test-drives/**
+      server:
+        webflux:
+          default-filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userOrIpKeyResolver}"
+                redis-rate-limiter.replenishRate: ${GATEWAY_RATE_LIMIT_REPLENISH_RATE:20}
+                redis-rate-limiter.burstCapacity: ${GATEWAY_RATE_LIMIT_BURST_CAPACITY:40}
+                redis-rate-limiter.requestedTokens: 1
+          routes:
+            - id: auth
+              uri: ${ORDER_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/api/auth/**
+            - id: public-catalog
+              uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/catalog/**,/api/v1/configurator/**
+            - id: customer-orders
+              uri: ${ORDER_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/api/v1/orders/**,/api/v1/test-drives/**
+            - id: customer-cart
+              uri: ${CART_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/v1/cart/**
+            - id: payments
+              uri: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/v1/payments/**
+            - id: admin-inventory
+              uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/admin/inventory/**,/api/v1/admin/fulfillment/**
+            - id: admin-orders
+              uri: ${ORDER_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/api/v1/admin/orders/**,/api/v1/admin/test-drives/**
 
 services:
   order:
@@ -56,6 +62,8 @@ services:
     health-url: ${STORAGE_SERVICE_HEALTH_URL:http://localhost:8081/actuator/health}
   cart:
     health-url: ${CART_SERVICE_HEALTH_URL:http://localhost:8083/actuator/health}
+  payment:
+    health-url: ${PAYMENT_SERVICE_HEALTH_URL:http://localhost:8084/actuator/health}
   health-timeout-millis: ${DOWNSTREAM_HEALTH_TIMEOUT_MILLIS:1000}
 
 security:

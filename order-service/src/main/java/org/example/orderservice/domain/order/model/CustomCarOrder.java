@@ -52,6 +52,10 @@ public class CustomCarOrder extends BaseEntity {
     @Column(name = "cart_id")
     private UUID cartId;
 
+    @Column(name = "paid_amount", nullable = false)
+    @Builder.Default
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CustomOrderStatus status;

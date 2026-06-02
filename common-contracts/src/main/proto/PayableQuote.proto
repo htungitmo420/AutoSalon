@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package payablequote;
+
+option java_multiple_files = true;
+option java_package = "org.example.commoncontracts.grpc.payment";
+option java_outer_classname = "PayableQuoteProto";
+
+service PayableQuoteService {
+  rpc GetPayableQuote(GetPayableQuoteRequest) returns (PayableQuoteResponse);
+}
+
+message GetPayableQuoteRequest {
+  string target_type = 1;
+  string reference_id = 2;
+  string customer_id = 3;
+}
+
+message PayableQuoteResponse {
+  string target_type = 1;
+  string reference_id = 2;
+  string customer_id = 3;
+  string total_amount = 4;
+  bool active = 5;
+}

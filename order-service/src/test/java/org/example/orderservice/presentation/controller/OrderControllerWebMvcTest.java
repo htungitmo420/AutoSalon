@@ -56,6 +56,7 @@ class OrderControllerWebMvcTest {
 
         CommonOrderRequest request = new CommonOrderRequest(carId, customerId);
         CommonOrderResponse response = new CommonOrderResponse(orderId, carId, customerId,
+                BigDecimal.ZERO, BigDecimal.ZERO,
                 CommonOrderStatus.CREATED, Instant.parse("2026-03-22T14:28:30Z"));
 
         when(orderService.placeCommonOrder(any(CommonOrderRequest.class))).thenReturn(response);
@@ -73,6 +74,7 @@ class OrderControllerWebMvcTest {
     void getCommonOrder_ReturnsPayload() throws Exception {
         UUID orderId = UUID.randomUUID();
         CommonOrderResponse response = new CommonOrderResponse(orderId, UUID.randomUUID(), UUID.randomUUID(),
+                BigDecimal.ZERO, BigDecimal.ZERO,
                 CommonOrderStatus.CREATED, Instant.parse("2026-03-22T10:00:00Z"));
 
         when(orderService.getCommonOrder(orderId)).thenReturn(response);
@@ -87,8 +89,10 @@ class OrderControllerWebMvcTest {
     @Test
     void listCommonOrders_ReturnsCollection() throws Exception {
         CommonOrderResponse first = new CommonOrderResponse(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                BigDecimal.ZERO, BigDecimal.ZERO,
                 CommonOrderStatus.CREATED, Instant.parse("2026-03-22T10:00:00Z"));
         CommonOrderResponse second = new CommonOrderResponse(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                BigDecimal.ZERO, BigDecimal.ZERO,
                 CommonOrderStatus.PAID, Instant.parse("2026-03-22T12:00:00Z"));
 
         when(orderService.listCommonOrders()).thenReturn(List.of(first, second));
@@ -114,6 +118,7 @@ class OrderControllerWebMvcTest {
     void approveCommonOrder_ReturnsUpdatedStatus() throws Exception {
         UUID orderId = UUID.randomUUID();
         CommonOrderResponse response = new CommonOrderResponse(orderId, UUID.randomUUID(), UUID.randomUUID(),
+                BigDecimal.ZERO, BigDecimal.ZERO,
                 CommonOrderStatus.APPROVED_BY_MANAGER, Instant.parse("2026-03-22T14:28:30Z"));
 
         when(orderService.approveCommonOrder(orderId)).thenReturn(response);
@@ -134,7 +139,7 @@ class OrderControllerWebMvcTest {
 
         CustomOrderRequest request = new CustomOrderRequest(modelId, customerId, Map.of("WHEELS", wheelPartId));
         CustomOrderResponse response = new CustomOrderResponse(orderId, modelId, customerId,
-                Map.of("WHEELS", wheelPartId), BigDecimal.valueOf(2300000), CustomOrderStatus.CREATED,
+                Map.of("WHEELS", wheelPartId), BigDecimal.valueOf(2300000), BigDecimal.ZERO, CustomOrderStatus.CREATED,
                 Instant.parse("2026-03-22T10:00:00Z"));
 
         when(orderService.placeCustomOrder(any(CustomOrderRequest.class))).thenReturn(response);
@@ -152,7 +157,7 @@ class OrderControllerWebMvcTest {
     void getCustomOrder_ReturnsPayload() throws Exception {
         UUID orderId = UUID.randomUUID();
         CustomOrderResponse response = new CustomOrderResponse(orderId, UUID.randomUUID(), UUID.randomUUID(), Map.of(),
-                BigDecimal.valueOf(2000000), CustomOrderStatus.PAID, Instant.parse("2026-03-22T10:00:00Z"));
+                BigDecimal.valueOf(2000000), BigDecimal.ZERO, CustomOrderStatus.PAID, Instant.parse("2026-03-22T10:00:00Z"));
 
         when(orderService.getCustomOrder(orderId)).thenReturn(response);
 
@@ -167,11 +172,11 @@ class OrderControllerWebMvcTest {
     void listCustomOrders_ReturnsCollection() throws Exception {
         CustomOrderResponse first = new CustomOrderResponse(
                 UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), Map.of(),
-                BigDecimal.valueOf(2100000), CustomOrderStatus.CREATED,
+                BigDecimal.valueOf(2100000), BigDecimal.ZERO, CustomOrderStatus.CREATED,
                 Instant.parse("2026-03-22T10:00:00Z"));
         CustomOrderResponse second = new CustomOrderResponse(
                 UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), Map.of(),
-                BigDecimal.valueOf(2500000), CustomOrderStatus.READY_FOR_PICKUP,
+                BigDecimal.valueOf(2500000), BigDecimal.ZERO, CustomOrderStatus.READY_FOR_PICKUP,
                 Instant.parse("2026-03-22T12:00:00Z"));
 
         when(orderService.listCustomOrders()).thenReturn(List.of(first, second));

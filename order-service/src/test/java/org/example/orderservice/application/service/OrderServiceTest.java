@@ -1,6 +1,7 @@
 package org.example.orderservice.application.service;
 
 import org.example.orderservice.application.client.InventoryReservationClient;
+import org.example.orderservice.application.client.CartSnapshotClient;
 import org.example.orderservice.application.dto.request.CommonOrderRequest;
 import org.example.orderservice.application.dto.request.CustomOrderRequest;
 import org.example.orderservice.application.dto.response.CommonOrderResponse;
@@ -57,6 +58,7 @@ class OrderServiceTest {
                 new InMemoryCustomOrderRepository(),
                 currentUserProvider,
                 inventoryReservationClient,
+                mock(CartSnapshotClient.class),
                 mock(OrderWorkflowEventPublisher.class)
         );
     }

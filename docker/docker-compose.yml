@@ -53,6 +53,24 @@ services:
     volumes:
       - cart_service_data:/var/lib/postgresql/data
 
+  payment-postgres:
+    image: postgres:16-alpine
+    container_name: auto_salon_payment_db
+    environment:
+      POSTGRES_DB: payment_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD:?Set PAYMENT_DB_PASSWORD}
+    ports:
+      - "54332:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d payment_service"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    volumes:
+      - payment_service_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7.2-alpine
     container_name: auto_salon_redis
@@ -116,9 +134,11 @@ services:
       CART_GRPC_HOST: cart-service
       CART_GRPC_PORT: 9091
       CART_GRPC_TIMEOUT_MILLIS: 2000
+      GRPC_SERVER_PORT: 9094
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
     ports:
       - "8080:8080"
+      - "9094:9094"
     depends_on:
       order-postgres:
         condition: service_healthy
@@ -189,6 +209,44 @@ services:
       redis:
         condition: service_healthy
 
+  payment-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        SERVICE_MODULE: payment-service
+    container_name: auto_salon_payment_service
+    environment:
+      SERVER_PORT: 8084
+      POSTGRESQL_HOST: payment-postgres
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_DB: payment_service
+      DB_USER: postgres
+      DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?Set PAYMENT_DB_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_ISSUER: ${JWT_ISSUER:-auto-salon}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-auto-salon-api}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      PAYMENT_CURRENCY: ${PAYMENT_CURRENCY:-vnd}
+      PAYMENT_CURRENCY_DECIMAL_PLACES: ${PAYMENT_CURRENCY_DECIMAL_PLACES:-0}
+      PAYMENT_DEPOSIT_PERCENT: ${PAYMENT_DEPOSIT_PERCENT:-10}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      ORDER_GRPC_HOST: order-service
+      ORDER_GRPC_PORT: 9094
+      ORDER_GRPC_TIMEOUT_MILLIS: 2000
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+    ports:
+      - "8084:8084"
+    depends_on:
+      payment-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      order-service:
+        condition: service_started
+
   api-gateway:
     build:
       context: ..
@@ -201,9 +259,11 @@ services:
       ORDER_SERVICE_URL: http://order-service:8080
       STORAGE_SERVICE_URL: http://storage-service:8081
       CART_SERVICE_URL: http://cart-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
       ORDER_SERVICE_HEALTH_URL: http://order-service:8080/actuator/health
       STORAGE_SERVICE_HEALTH_URL: http://storage-service:8081/actuator/health
       CART_SERVICE_HEALTH_URL: http://cart-service:8083/actuator/health
+      PAYMENT_SERVICE_HEALTH_URL: http://payment-service:8084/actuator/health
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_ISSUER: ${JWT_ISSUER:-auto-salon}
@@ -225,6 +285,8 @@ services:
       storage-service:
         condition: service_started
       cart-service:
+        condition: service_started
+      payment-service:
         condition: service_started
 
   kafka:
@@ -305,6 +367,7 @@ volumes:
   order_service_data:
   storage_service_data:
   cart_service_data:
+  payment_service_data:
   prometheus_data:
   grafana_data:
   tempo_data:

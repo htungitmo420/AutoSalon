@@ -53,6 +53,7 @@ public class SecurityConfig {
                                 "/api/auth/logout",
                                 "/api/auth/password-reset/request",
                                 "/api/auth/password-reset/confirm",
+                                "/api/v1/payments/webhooks/stripe",
                                 "/api/v1/catalog/**",
                                 "/api/v1/configurator/**",
                                 "/actuator/health",

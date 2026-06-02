@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.orderservice.application.dto.response.PageResponse;
 import org.example.orderservice.application.dto.response.TestDriveResponse;
+import org.example.orderservice.application.dto.request.QuoteTestDriveRequest;
 import org.example.orderservice.application.service.AdminTestDriveQueryService;
 import org.example.orderservice.application.service.TestDriveService;
 import org.example.orderservice.domain.testdrive.enums.TestDriveStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -52,6 +54,11 @@ public class AdminTestDriveController {
     @PatchMapping("/{testDriveId}/confirm")
     public TestDriveResponse confirm(@PathVariable UUID testDriveId) {
         return testDriveService.confirmTestDrive(testDriveId);
+    }
+
+    @PatchMapping("/{testDriveId}/quote")
+    public TestDriveResponse quote(@PathVariable UUID testDriveId, @RequestBody QuoteTestDriveRequest request) {
+        return testDriveService.quoteTestDrive(testDriveId, request);
     }
 
     @PatchMapping("/{testDriveId}/complete")

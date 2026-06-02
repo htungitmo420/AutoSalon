@@ -22,6 +22,7 @@ import org.example.orderservice.domain.order.enums.CommonOrderStatus;
 import org.example.orderservice.domain.order.enums.CustomOrderStatus;
 import org.example.orderservice.domain.order.model.CommonCarOrder;
 import org.example.orderservice.domain.order.model.CustomCarOrder;
+import org.example.commoncontracts.payment.PaymentPurpose;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -64,10 +65,11 @@ public class OrderService {
                     order.getId(), order.getCarId(), reservationExpiry());
             validateQuotedPrice(order.getId(), reservation, quotedPrice);
             order.setReservationId(reservation.reservationId());
+            order.setTotalPrice(reservation.totalPrice());
             order.setStatus(CommonOrderStatus.WAITING_FOR_PAYMENT);
             CommonCarOrder saved = commonOrderRepository.save(order);
             eventPublisher.publishCommonOrderAwaitingPayment(
-                    saved.getId(), saved.getReservationId(), reservation.totalPrice());
+                    saved.getId(), saved.getCustomerId(), saved.getReservationId(), saved.getTotalPrice());
             return OrderMapper.INSTANCE.toCommonOrderResponse(saved);
         } catch (DomainValidationException ex) {
             if (cartId != null) {
@@ -122,7 +124,7 @@ public class OrderService {
             order.setStatus(CustomOrderStatus.WAITING_FOR_PAYMENT);
             CustomCarOrder saved = customOrderRepository.save(order);
             eventPublisher.publishCustomOrderAwaitingPayment(
-                    saved.getId(), saved.getReservationId(), saved.getTotalPrice());
+                    saved.getId(), saved.getCustomerId(), saved.getReservationId(), saved.getTotalPrice());
             return OrderMapper.INSTANCE.toCustomOrderResponse(saved);
         } catch (DomainValidationException ex) {
             if (cartId != null) {
@@ -205,13 +207,7 @@ public class OrderService {
     @Transactional
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public CommonOrderResponse markCommonOrderPaid(UUID orderId) {
-        CommonCarOrder order = findCommonOrderOrThrow(orderId);
-        validateCommonOrderStatus(order, CommonOrderStatus.WAITING_FOR_PAYMENT,
-                "Can only mark as paid when WAITING_FOR_PAYMENT");
-        validateReservationId(order.getReservationId());
-        inventoryReservationClient.confirmReservation(order.getId(), order.getReservationId());
-        order.setStatus(CommonOrderStatus.PAID);
-        return OrderMapper.INSTANCE.toCommonOrderResponse(commonOrderRepository.save(order));
+        throw new DomainValidationException("Manual mark-paid is retired; payment webhook updates the order");
     }
 
     @Transactional
@@ -261,17 +257,7 @@ public class OrderService {
     @Transactional
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public CustomOrderResponse markCustomOrderPaid(UUID orderId) {
-        CustomCarOrder order = findCustomOrderOrThrow(orderId);
-        validateCustomOrderStatus(order, CustomOrderStatus.WAITING_FOR_PAYMENT,
-                "Can only mark as paid when WAITING_FOR_PAYMENT");
-        validateReservationId(order.getReservationId());
-        inventoryReservationClient.confirmReservation(order.getId(), order.getReservationId());
-        order.setStatus(CustomOrderStatus.PAID);
-        customOrderRepository.save(order);
-
-        // A confirmed custom reservation creates an assembly work item in storage.
-        order.setStatus(CustomOrderStatus.ASSEMBLING);
-        return OrderMapper.INSTANCE.toCustomOrderResponse(customOrderRepository.save(order));
+        throw new DomainValidationException("Manual mark-paid is retired; payment webhook updates the order");
     }
 
     @Transactional
@@ -319,7 +305,10 @@ public class OrderService {
         CommonCarOrder order = findCommonOrderOrThrow(orderId);
         if (order.getStatus() == CommonOrderStatus.WAITING_FOR_PAYMENT) {
             order.setStatus(CommonOrderStatus.CANCELLED);
-            commonOrderRepository.save(order);
+            CommonCarOrder saved = commonOrderRepository.save(order);
+            if (saved.getReservationId() != null) {
+                eventPublisher.publishCommonOrderCancelled(saved.getId(), saved.getReservationId());
+            }
         }
     }
 
@@ -328,7 +317,10 @@ public class OrderService {
         CustomCarOrder order = findCustomOrderOrThrow(orderId);
         if (order.getStatus() == CustomOrderStatus.WAITING_FOR_PAYMENT) {
             order.setStatus(CustomOrderStatus.CANCELLED);
-            customOrderRepository.save(order);
+            CustomCarOrder saved = customOrderRepository.save(order);
+            if (saved.getReservationId() != null) {
+                eventPublisher.publishCustomOrderCancelled(saved.getId(), saved.getReservationId());
+            }
         }
     }
 
@@ -336,9 +328,65 @@ public class OrderService {
     public void handleAssemblyCompleted(UUID orderId) {
         CustomCarOrder order = findCustomOrderOrThrow(orderId);
         if (order.getStatus() == CustomOrderStatus.ASSEMBLING) {
-            order.setStatus(CustomOrderStatus.READY_FOR_PICKUP);
+            order.setStatus(isFullyPaid(order.getPaidAmount(), order.getTotalPrice())
+                    ? CustomOrderStatus.READY_FOR_PICKUP
+                    : CustomOrderStatus.WAITING_FOR_BALANCE);
             customOrderRepository.save(order);
         }
+    }
+
+    @Transactional
+    public void handleCommonPaymentSucceeded(UUID orderId, PaymentPurpose purpose, BigDecimal amount) {
+        CommonCarOrder order = findCommonOrderOrThrow(orderId);
+        if (order.getStatus() != CommonOrderStatus.WAITING_FOR_PAYMENT
+                && order.getStatus() != CommonOrderStatus.DEPOSIT_PAID) {
+            return;
+        }
+        BigDecimal paidAmount = addPayment(order.getPaidAmount(), amount, order.getTotalPrice());
+        if (order.getStatus() == CommonOrderStatus.WAITING_FOR_PAYMENT) {
+            confirmHeldReservation(order.getId(), order.getReservationId());
+        }
+        order.setPaidAmount(paidAmount);
+        order.setStatus(isFullyPaid(paidAmount, order.getTotalPrice())
+                ? CommonOrderStatus.PAID
+                : CommonOrderStatus.DEPOSIT_PAID);
+        commonOrderRepository.save(order);
+    }
+
+    @Transactional
+    public void handleCustomPaymentSucceeded(UUID orderId, PaymentPurpose purpose, BigDecimal amount) {
+        CustomCarOrder order = findCustomOrderOrThrow(orderId);
+        if (order.getStatus() != CustomOrderStatus.WAITING_FOR_PAYMENT
+                && order.getStatus() != CustomOrderStatus.ASSEMBLING
+                && order.getStatus() != CustomOrderStatus.WAITING_FOR_BALANCE) {
+            return;
+        }
+        BigDecimal paidAmount = addPayment(order.getPaidAmount(), amount, order.getTotalPrice());
+        if (order.getStatus() == CustomOrderStatus.WAITING_FOR_PAYMENT) {
+            confirmHeldReservation(order.getId(), order.getReservationId());
+            order.setStatus(CustomOrderStatus.ASSEMBLING);
+        } else if (order.getStatus() == CustomOrderStatus.WAITING_FOR_BALANCE
+                && isFullyPaid(paidAmount, order.getTotalPrice())) {
+            order.setStatus(CustomOrderStatus.READY_FOR_PICKUP);
+        }
+        order.setPaidAmount(paidAmount);
+        customOrderRepository.save(order);
+    }
+
+    @Transactional
+    public void handleCommonPaymentRefunded(UUID orderId, BigDecimal amount) {
+        CommonCarOrder order = findCommonOrderOrThrow(orderId);
+        order.setPaidAmount(subtractRefund(order.getPaidAmount(), amount));
+        order.setStatus(CommonOrderStatus.REFUND_REQUIRED);
+        commonOrderRepository.save(order);
+    }
+
+    @Transactional
+    public void handleCustomPaymentRefunded(UUID orderId, BigDecimal amount) {
+        CustomCarOrder order = findCustomOrderOrThrow(orderId);
+        order.setPaidAmount(subtractRefund(order.getPaidAmount(), amount));
+        order.setStatus(CustomOrderStatus.REFUND_REQUIRED);
+        customOrderRepository.save(order);
     }
 
     @Transactional
@@ -431,6 +479,27 @@ public class OrderService {
         if (reservationId == null) {
             throw new DomainValidationException("Order has no held reservation");
         }
+    }
+
+    private void confirmHeldReservation(UUID orderId, UUID reservationId) {
+        validateReservationId(reservationId);
+        inventoryReservationClient.confirmReservation(orderId, reservationId);
+    }
+
+    private BigDecimal addPayment(BigDecimal current, BigDecimal payment, BigDecimal total) {
+        BigDecimal updated = (current == null ? BigDecimal.ZERO : current).add(payment);
+        if (total == null || updated.compareTo(total) > 0) {
+            throw new DomainValidationException("Payment exceeds outstanding order amount");
+        }
+        return updated;
+    }
+
+    private boolean isFullyPaid(BigDecimal paidAmount, BigDecimal totalPrice) {
+        return paidAmount != null && totalPrice != null && paidAmount.compareTo(totalPrice) >= 0;
+    }
+
+    private BigDecimal subtractRefund(BigDecimal current, BigDecimal refund) {
+        return (current == null ? BigDecimal.ZERO : current).subtract(refund).max(BigDecimal.ZERO);
     }
 
     private CommonOrderResponse transitionCommonOrder(UUID orderId, CommonOrderStatus required,

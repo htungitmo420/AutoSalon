@@ -4,16 +4,17 @@ plugins {
 }
 
 dependencies {
+    api platform('com.google.protobuf:protobuf-bom:3.25.9')
     api 'io.grpc:grpc-stub:1.63.0'
     api 'io.grpc:grpc-protobuf:1.63.0'
-    api 'com.google.protobuf:protobuf-java:3.25.3'
+    api 'com.google.protobuf:protobuf-java'
 
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 }
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.25.3'
+        artifact = 'com.google.protobuf:protoc:3.25.9'
     }
 
     plugins {

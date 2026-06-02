@@ -13,6 +13,7 @@ public record CustomOrderResponse(
         UUID customerId,
         Map<String, UUID> selectedPartIds,
         BigDecimal totalPrice,
+        BigDecimal paidAmount,
         CustomOrderStatus status,
         Instant createdAt
 ) {}

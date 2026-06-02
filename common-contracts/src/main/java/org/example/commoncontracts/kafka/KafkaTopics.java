@@ -10,6 +10,11 @@ public final class KafkaTopics {
     public static final String RESERVATION_EXPIRED_V1 = "reservation_expired_v1";
     public static final String ASSEMBLY_COMPLETED_V1 = "assembly_completed_v1";
     public static final String ASSEMBLY_FAILED_V1 = "assembly_failed_v1";
+    public static final String TEST_DRIVE_AWAITING_PAYMENT_V1 = "test_drive_awaiting_payment_v1";
+    public static final String TEST_DRIVE_CANCELLED_V1 = "test_drive_cancelled_v1";
+    public static final String PAYMENT_SUCCEEDED_V1 = "payment_succeeded_v1";
+    public static final String PAYMENT_FAILED_V1 = "payment_failed_v1";
+    public static final String PAYMENT_REFUNDED_V1 = "payment_refunded_v1";
 
     private KafkaTopics() {
     }

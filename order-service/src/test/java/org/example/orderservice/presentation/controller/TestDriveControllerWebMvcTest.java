@@ -16,6 +16,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,7 +53,7 @@ class TestDriveControllerWebMvcTest {
 
         BookTestDriveRequest request = new BookTestDriveRequest(carId, customerId, start);
         TestDriveResponse response = new TestDriveResponse(testDriveId, carId, customerId,
-                TestDriveStatus.PENDING, start);
+                TestDriveStatus.PENDING, start, null);
 
         when(testDriveService.bookTestDrive(any(BookTestDriveRequest.class))).thenReturn(response);
 
@@ -69,7 +70,7 @@ class TestDriveControllerWebMvcTest {
     void getTestDrive_ReturnsPayload() throws Exception {
         UUID testDriveId = UUID.randomUUID();
         TestDriveResponse response = new TestDriveResponse(testDriveId, UUID.randomUUID(), UUID.randomUUID(),
-                TestDriveStatus.CONFIRMED, LocalDateTime.of(2026, 3, 25, 11, 30));
+                TestDriveStatus.CONFIRMED, LocalDateTime.of(2026, 3, 25, 11, 30), BigDecimal.TEN);
 
         when(testDriveService.getTestDrive(testDriveId)).thenReturn(response);
 
@@ -83,9 +84,9 @@ class TestDriveControllerWebMvcTest {
     @Test
     void listTestDrives_ReturnsCollection() throws Exception {
         TestDriveResponse first = new TestDriveResponse(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-                TestDriveStatus.PENDING, LocalDateTime.of(2026, 3, 25, 10, 0));
+                TestDriveStatus.PENDING, LocalDateTime.of(2026, 3, 25, 10, 0), null);
         TestDriveResponse second = new TestDriveResponse(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-                TestDriveStatus.CANCELLED, LocalDateTime.of(2026, 3, 25, 12, 0));
+                TestDriveStatus.CANCELLED, LocalDateTime.of(2026, 3, 25, 12, 0), BigDecimal.TEN);
 
         when(testDriveService.listTestDrives()).thenReturn(List.of(first, second));
 
@@ -110,7 +111,7 @@ class TestDriveControllerWebMvcTest {
     void confirmTestDrive_ReturnsUpdatedStatus() throws Exception {
         UUID testDriveId = UUID.randomUUID();
         TestDriveResponse response = new TestDriveResponse(testDriveId, UUID.randomUUID(), UUID.randomUUID(),
-                TestDriveStatus.CONFIRMED, LocalDateTime.of(2026, 3, 25, 15, 0));
+                TestDriveStatus.CONFIRMED, LocalDateTime.of(2026, 3, 25, 15, 0), BigDecimal.TEN);
 
         when(testDriveService.confirmTestDrive(testDriveId)).thenReturn(response);
 
@@ -125,7 +126,7 @@ class TestDriveControllerWebMvcTest {
     void completeTestDrive_ReturnsUpdatedStatus() throws Exception {
         UUID testDriveId = UUID.randomUUID();
         TestDriveResponse response = new TestDriveResponse(testDriveId, UUID.randomUUID(), UUID.randomUUID(),
-                TestDriveStatus.COMPLETED, LocalDateTime.of(2026, 3, 25, 16, 0));
+                TestDriveStatus.COMPLETED, LocalDateTime.of(2026, 3, 25, 16, 0), BigDecimal.TEN);
 
         when(testDriveService.completeTestDrive(testDriveId)).thenReturn(response);
 
@@ -140,7 +141,7 @@ class TestDriveControllerWebMvcTest {
     void cancelTestDrive_ReturnsUpdatedStatus() throws Exception {
         UUID testDriveId = UUID.randomUUID();
         TestDriveResponse response = new TestDriveResponse(testDriveId, UUID.randomUUID(), UUID.randomUUID(),
-                TestDriveStatus.CANCELLED, LocalDateTime.of(2026, 3, 25, 17, 0));
+                TestDriveStatus.CANCELLED, LocalDateTime.of(2026, 3, 25, 17, 0), BigDecimal.TEN);
 
         when(testDriveService.cancelTestDrive(testDriveId)).thenReturn(response);
 

@@ -14,6 +14,7 @@ import lombok.Setter;
 import org.example.orderservice.domain.BaseEntity;
 import org.example.orderservice.domain.order.enums.CommonOrderStatus;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter @Setter
@@ -35,6 +36,13 @@ public class CommonCarOrder extends BaseEntity {
 
     @Column(name = "cart_id")
     private UUID cartId;
+
+    @Column(name = "total_price")
+    private BigDecimal totalPrice;
+
+    @Column(name = "paid_amount", nullable = false)
+    @Builder.Default
+    private BigDecimal paidAmount = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

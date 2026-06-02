@@ -8,6 +8,7 @@ public enum CustomOrderStatus {
     WAITING_FOR_PAYMENT,
     PAID,
     ASSEMBLING,
+    WAITING_FOR_BALANCE,
     WAITING_FOR_DELIVERY,
     READY_FOR_PICKUP,
     COMPLETED,

@@ -34,6 +34,7 @@ public interface OrderMapper {
     @Mapping(target = "removed", ignore = true)
     @Mapping(target = "customerId", source = "customerId")
     @Mapping(target = "status", expression = "java(CommonOrderStatus.PENDING_RESERVATION)")
+    @Mapping(target = "paidAmount", ignore = true)
     CommonCarOrder toCommonCarOrder(CommonOrderRequest request, UUID customerId);
 
     @Mapping(target = "id", ignore = true)
@@ -45,6 +46,7 @@ public interface OrderMapper {
     @Mapping(target = "selectedPartIds", source = "finalConfig")
     @Mapping(target = "totalPrice", source = "totalPrice")
     @Mapping(target = "status", expression = "java(CustomOrderStatus.PENDING_RESERVATION)")
+    @Mapping(target = "paidAmount", ignore = true)
     CustomCarOrder toCustomCarOrder(CustomOrderRequest request, UUID modelId, UUID customerId,
                                     Map<String, UUID> finalConfig, BigDecimal totalPrice);
 }

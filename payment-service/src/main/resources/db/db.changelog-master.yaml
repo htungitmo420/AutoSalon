@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01-create-payment-tables
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/01-create-payment-tables.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 02-active-payables
+      author: htungitmo420
+      changes:
+        - sqlFile:
+            path: migrations/02-active-payables.sql
+            relativeToChangelogFile: true
