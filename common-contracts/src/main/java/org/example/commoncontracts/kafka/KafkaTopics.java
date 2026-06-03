@@ -1,6 +1,8 @@
 package org.example.commoncontracts.kafka;
 
 public final class KafkaTopics {
+    public static final String DEAD_LETTER_SUFFIX = ".DLT";
+
     public static final String ORDER_SENT_FOR_APPROVAL = "order_sent_for_approval";
     public static final String ORDER_APPROVED = "order_approved";
     public static final String ORDER_REJECTED = "order_rejected";
@@ -15,6 +17,10 @@ public final class KafkaTopics {
     public static final String PAYMENT_SUCCEEDED_V1 = "payment_succeeded_v1";
     public static final String PAYMENT_FAILED_V1 = "payment_failed_v1";
     public static final String PAYMENT_REFUNDED_V1 = "payment_refunded_v1";
+
+    public static String deadLetter(String topic) {
+        return topic + DEAD_LETTER_SUFFIX;
+    }
 
     private KafkaTopics() {
     }

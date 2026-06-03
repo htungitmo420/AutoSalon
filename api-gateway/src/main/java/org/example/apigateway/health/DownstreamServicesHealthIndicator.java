@@ -19,6 +19,7 @@ public class DownstreamServicesHealthIndicator implements ReactiveHealthIndicato
     private final String storageServiceHealthUrl;
     private final String cartServiceHealthUrl;
     private final String paymentServiceHealthUrl;
+    private final String notificationServiceHealthUrl;
     private final Duration timeout;
 
     public DownstreamServicesHealthIndicator(
@@ -27,12 +28,14 @@ public class DownstreamServicesHealthIndicator implements ReactiveHealthIndicato
             @Value("${services.storage.health-url}") String storageServiceHealthUrl,
             @Value("${services.cart.health-url}") String cartServiceHealthUrl,
             @Value("${services.payment.health-url}") String paymentServiceHealthUrl,
+            @Value("${services.notification.health-url}") String notificationServiceHealthUrl,
             @Value("${services.health-timeout-millis:1000}") long healthTimeoutMillis) {
         this.webClient = webClientBuilder.build();
         this.orderServiceHealthUrl = orderServiceHealthUrl;
         this.storageServiceHealthUrl = storageServiceHealthUrl;
         this.cartServiceHealthUrl = cartServiceHealthUrl;
         this.paymentServiceHealthUrl = paymentServiceHealthUrl;
+        this.notificationServiceHealthUrl = notificationServiceHealthUrl;
         this.timeout = Duration.ofMillis(healthTimeoutMillis);
     }
 
@@ -42,8 +45,10 @@ public class DownstreamServicesHealthIndicator implements ReactiveHealthIndicato
                         isHealthy(orderServiceHealthUrl),
                         isHealthy(storageServiceHealthUrl),
                         isHealthy(cartServiceHealthUrl),
-                        isHealthy(paymentServiceHealthUrl))
-                .map(results -> buildHealth(results.getT1(), results.getT2(), results.getT3(), results.getT4()));
+                        isHealthy(paymentServiceHealthUrl),
+                        isHealthy(notificationServiceHealthUrl))
+                .map(results -> buildHealth(
+                        results.getT1(), results.getT2(), results.getT3(), results.getT4(), results.getT5()));
     }
 
     private Mono<Boolean> isHealthy(String healthUrl) {
@@ -57,13 +62,15 @@ public class DownstreamServicesHealthIndicator implements ReactiveHealthIndicato
     }
 
     private Health buildHealth(boolean orderServiceHealthy, boolean storageServiceHealthy, boolean cartServiceHealthy,
-                               boolean paymentServiceHealthy) {
+                               boolean paymentServiceHealthy, boolean notificationServiceHealthy) {
         Map<String, String> details = new LinkedHashMap<>();
         details.put("order-service", status(orderServiceHealthy));
         details.put("storage-service", status(storageServiceHealthy));
         details.put("cart-service", status(cartServiceHealthy));
         details.put("payment-service", status(paymentServiceHealthy));
+        details.put("notification-service", status(notificationServiceHealthy));
         return (orderServiceHealthy && storageServiceHealthy && cartServiceHealthy && paymentServiceHealthy
+                && notificationServiceHealthy
                 ? Health.up() : Health.down())
                 .withDetails(details)
                 .build();

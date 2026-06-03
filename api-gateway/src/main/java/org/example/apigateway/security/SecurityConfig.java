@@ -59,9 +59,12 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/prometheus"
                         ).permitAll()
-                        .pathMatchers("/api/v1/admin/inventory/**", "/api/v1/admin/fulfillment/**")
+                        .pathMatchers("/api/v1/admin/inventory/**", "/api/v1/admin/fulfillment/**",
+                                "/api/v1/admin/catalog-assets/**")
                         .hasAnyRole("WAREHOUSE_ADMIN", "ADMIN")
                         .pathMatchers("/api/v1/admin/orders/**", "/api/v1/admin/test-drives/**")
+                        .hasAnyRole("MANAGER", "ADMIN")
+                        .pathMatchers("/api/v1/admin/dashboard/**")
                         .hasAnyRole("MANAGER", "ADMIN")
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

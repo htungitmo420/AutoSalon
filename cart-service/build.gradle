@@ -22,7 +22,7 @@ dependencies {
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
     implementation 'org.liquibase:liquibase-core'
-    runtimeOnly 'org.postgresql:postgresql:42.7.4'
+    runtimeOnly 'org.postgresql:postgresql'
 
     implementation 'net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE'
     implementation project(':common-contracts')

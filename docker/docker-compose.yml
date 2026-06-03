@@ -71,6 +71,24 @@ services:
     volumes:
       - payment_service_data:/var/lib/postgresql/data
 
+  notification-postgres:
+    image: postgres:16-alpine
+    container_name: auto_salon_notification_db
+    environment:
+      POSTGRES_DB: notification_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?Set NOTIFICATION_DB_PASSWORD}
+    ports:
+      - "54333:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notification_service"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    volumes:
+      - notification_service_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7.2-alpine
     container_name: auto_salon_redis
@@ -81,6 +99,24 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: auto_salon_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - minio_data:/data
 
   order-service:
     build:
@@ -136,6 +172,8 @@ services:
       CART_GRPC_TIMEOUT_MILLIS: 2000
       GRPC_SERVER_PORT: 9094
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:-3}
+      KAFKA_RETRY_BACKOFF_MS: ${KAFKA_RETRY_BACKOFF_MS:-1000}
     ports:
       - "8080:8080"
       - "9094:9094"
@@ -170,6 +208,13 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       GRPC_SERVER_PORT: 9090
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:-3}
+      KAFKA_RETRY_BACKOFF_MS: ${KAFKA_RETRY_BACKOFF_MS:-1000}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-auto-salon-catalog}
     ports:
       - "8081:8081"
       - "9090:9090"
@@ -178,6 +223,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+      minio:
+        condition: service_healthy
 
   cart-service:
     build:
@@ -237,6 +284,8 @@ services:
       ORDER_GRPC_PORT: 9094
       ORDER_GRPC_TIMEOUT_MILLIS: 2000
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:-3}
+      KAFKA_RETRY_BACKOFF_MS: ${KAFKA_RETRY_BACKOFF_MS:-1000}
     ports:
       - "8084:8084"
     depends_on:
@@ -245,6 +294,35 @@ services:
       kafka:
         condition: service_started
       order-service:
+        condition: service_started
+
+  notification-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        SERVICE_MODULE: notification-service
+    container_name: auto_salon_notification_service
+    environment:
+      SERVER_PORT: 8085
+      POSTGRESQL_HOST: notification-postgres
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_DB: notification_service
+      DB_USER: postgres
+      DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?Set NOTIFICATION_DB_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:-3}
+      KAFKA_RETRY_BACKOFF_MS: ${KAFKA_RETRY_BACKOFF_MS:-1000}
+      JWT_ISSUER: ${JWT_ISSUER:-auto-salon}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-auto-salon-api}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+    ports:
+      - "8085:8085"
+    depends_on:
+      notification-postgres:
+        condition: service_healthy
+      kafka:
         condition: service_started
 
   api-gateway:
@@ -260,10 +338,12 @@ services:
       STORAGE_SERVICE_URL: http://storage-service:8081
       CART_SERVICE_URL: http://cart-service:8083
       PAYMENT_SERVICE_URL: http://payment-service:8084
+      NOTIFICATION_SERVICE_URL: http://notification-service:8085
       ORDER_SERVICE_HEALTH_URL: http://order-service:8080/actuator/health
       STORAGE_SERVICE_HEALTH_URL: http://storage-service:8081/actuator/health
       CART_SERVICE_HEALTH_URL: http://cart-service:8083/actuator/health
       PAYMENT_SERVICE_HEALTH_URL: http://payment-service:8084/actuator/health
+      NOTIFICATION_SERVICE_HEALTH_URL: http://notification-service:8085/actuator/health
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_ISSUER: ${JWT_ISSUER:-auto-salon}
@@ -287,6 +367,8 @@ services:
       cart-service:
         condition: service_started
       payment-service:
+        condition: service_started
+      notification-service:
         condition: service_started
 
   kafka:
@@ -368,6 +450,8 @@ volumes:
   storage_service_data:
   cart_service_data:
   payment_service_data:
+  notification_service_data:
+  minio_data:
   prometheus_data:
   grafana_data:
   tempo_data:

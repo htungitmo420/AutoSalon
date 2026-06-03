@@ -34,6 +34,10 @@ spring:
               uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
               predicates:
                 - Path=/api/v1/catalog/**,/api/v1/configurator/**
+            - id: customer-notifications
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/v1/notifications/**
             - id: customer-orders
               uri: ${ORDER_SERVICE_URL:http://localhost:8080}
               predicates:
@@ -49,11 +53,15 @@ spring:
             - id: admin-inventory
               uri: ${STORAGE_SERVICE_URL:http://localhost:8081}
               predicates:
-                - Path=/api/v1/admin/inventory/**,/api/v1/admin/fulfillment/**
+                - Path=/api/v1/admin/inventory/**,/api/v1/admin/fulfillment/**,/api/v1/admin/catalog-assets/**
             - id: admin-orders
               uri: ${ORDER_SERVICE_URL:http://localhost:8080}
               predicates:
                 - Path=/api/v1/admin/orders/**,/api/v1/admin/test-drives/**
+            - id: admin-dashboard
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/v1/admin/dashboard/**
 
 services:
   order:
@@ -64,6 +72,8 @@ services:
     health-url: ${CART_SERVICE_HEALTH_URL:http://localhost:8083/actuator/health}
   payment:
     health-url: ${PAYMENT_SERVICE_HEALTH_URL:http://localhost:8084/actuator/health}
+  notification:
+    health-url: ${NOTIFICATION_SERVICE_HEALTH_URL:http://localhost:8085/actuator/health}
   health-timeout-millis: ${DOWNSTREAM_HEALTH_TIMEOUT_MILLIS:1000}
 
 security:
