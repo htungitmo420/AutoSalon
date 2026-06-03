@@ -12,10 +12,10 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.21.4'
 
     // PostgreSQL
-    testImplementation 'org.postgresql:postgresql:42.7.4'
+    testImplementation 'org.postgresql:postgresql'
     testImplementation 'org.springframework.kafka:spring-kafka-test'
     testImplementation 'org.testcontainers:kafka'
-    runtimeOnly 'org.postgresql:postgresql:42.7.4'
+    runtimeOnly 'org.postgresql:postgresql'
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.42")
@@ -33,6 +33,7 @@ dependencies {
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
@@ -54,6 +55,9 @@ dependencies {
     // Kafka
     implementation 'org.springframework.kafka:spring-kafka'
     testImplementation 'org.springframework.kafka:spring-kafka-test'
+
+    // S3-compatible catalog assets
+    implementation 'io.minio:minio:9.0.1'
 
     // gRPC
     implementation 'net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE'

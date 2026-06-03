@@ -80,3 +80,20 @@ logging:
 grpc:
   server:
     port: ${GRPC_SERVER_PORT:9090}
+
+kafka:
+  retry:
+    max-attempts: ${KAFKA_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${KAFKA_RETRY_BACKOFF_MS:1000}
+
+storage:
+  assets:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    public-endpoint: ${MINIO_PUBLIC_ENDPOINT:${MINIO_ENDPOINT:http://localhost:9000}}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    bucket: ${MINIO_BUCKET:auto-salon-catalog}
+    region: ${MINIO_REGION:us-east-1}
+    configure-cors: ${MINIO_CONFIGURE_BUCKET_CORS:false}
+    max-size-bytes: ${CATALOG_ASSET_MAX_SIZE_BYTES:10485760}
+    presigned-url-ttl-seconds: ${CATALOG_ASSET_URL_TTL_SECONDS:900}
