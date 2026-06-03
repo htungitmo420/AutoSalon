@@ -1,0 +1,14 @@
+package org.example.notificationservice.domain.notification;
+
+public enum NotificationType {
+    ORDER_AWAITING_PAYMENT,
+    ORDER_CANCELLED,
+    RESERVATION_EXPIRED,
+    ASSEMBLY_COMPLETED,
+    ASSEMBLY_FAILED,
+    TEST_DRIVE_AWAITING_PAYMENT,
+    TEST_DRIVE_CANCELLED,
+    PAYMENT_SUCCEEDED,
+    PAYMENT_FAILED,
+    PAYMENT_REFUNDED
+}
