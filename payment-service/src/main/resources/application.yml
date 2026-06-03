@@ -77,3 +77,8 @@ grpc:
 order:
   grpc:
     timeout-millis: ${ORDER_GRPC_TIMEOUT_MILLIS:2000}
+
+kafka:
+  retry:
+    max-attempts: ${KAFKA_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${KAFKA_RETRY_BACKOFF_MS:1000}

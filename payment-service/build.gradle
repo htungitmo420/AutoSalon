@@ -21,7 +21,7 @@ dependencies {
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
     implementation 'org.liquibase:liquibase-core'
-    runtimeOnly 'org.postgresql:postgresql:42.7.4'
+    runtimeOnly 'org.postgresql:postgresql'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'com.stripe:stripe-java:31.4.1'
     implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE'
