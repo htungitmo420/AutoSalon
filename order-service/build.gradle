@@ -12,10 +12,10 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.21.4'
 
     // PostgreSQL
-    testImplementation 'org.postgresql:postgresql:42.7.4'
+    testImplementation 'org.postgresql:postgresql'
     testImplementation 'org.springframework.kafka:spring-kafka-test'
     testImplementation 'org.testcontainers:kafka'
-    runtimeOnly 'org.postgresql:postgresql:42.7.4'
+    runtimeOnly 'org.postgresql:postgresql'
 
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.42")
