@@ -69,7 +69,7 @@ security:
     audience: ${JWT_AUDIENCE:auto-salon-api}
     secret: ${JWT_SECRET}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
     max-age-seconds: ${CORS_MAX_AGE_SECONDS:3600}
 

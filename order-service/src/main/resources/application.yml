@@ -106,12 +106,33 @@ security:
       fixed-delay-ms: ${AUTH_CLEANUP_FIXED_DELAY_MS:3600000}
     trusted-proxy:
       use-forwarded-for: ${AUTH_TRUSTED_PROXY_USE_FORWARDED_FOR:false}
-    bootstrap-admin:
-      enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:false}
-      email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:admin@autosalon.local}
-      password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:}
+    bootstrap:
+      enabled: ${AUTH_BOOTSTRAP_ENABLED:${AUTH_BOOTSTRAP_ADMIN_ENABLED:false}}
+      update-existing-users: ${AUTH_BOOTSTRAP_UPDATE_EXISTING_USERS:false}
+      default-password: ${AUTH_BOOTSTRAP_PASSWORD:${AUTH_BOOTSTRAP_TEST_USERS_PASSWORD:${AUTH_BOOTSTRAP_ADMIN_PASSWORD:}}}
+      users:
+        - email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:admin@autosalon.local}
+          password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:}
+          full-name: ${AUTH_BOOTSTRAP_ADMIN_FULL_NAME:Local Admin}
+          roles:
+            - USER
+            - MANAGER
+            - WAREHOUSE_ADMIN
+            - ADMIN
+        - email: ${AUTH_BOOTSTRAP_USER_EMAIL:user@autosalon.local}
+          full-name: ${AUTH_BOOTSTRAP_USER_FULL_NAME:Local User}
+          roles:
+            - USER
+        - email: ${AUTH_BOOTSTRAP_MANAGER_EMAIL:manager@autosalon.local}
+          full-name: ${AUTH_BOOTSTRAP_MANAGER_FULL_NAME:Local Manager}
+          roles:
+            - MANAGER
+        - email: ${AUTH_BOOTSTRAP_WAREHOUSE_EMAIL:warehouse@autosalon.local}
+          full-name: ${AUTH_BOOTSTRAP_WAREHOUSE_FULL_NAME:Local Warehouse Admin}
+          roles:
+            - WAREHOUSE_ADMIN
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
     max-age-seconds: ${CORS_MAX_AGE_SECONDS:3600}
 
