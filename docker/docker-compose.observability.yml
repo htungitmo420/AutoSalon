@@ -1,0 +1,55 @@
+services:
+  tempo:
+    image: grafana/tempo:2.5.0
+    profiles: ["observability"]
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./observability/tempo.yml:/etc/tempo.yml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    profiles: ["observability"]
+    command: ["--config=/etc/otel-collector.yml"]
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otel-collector.yml:ro
+    depends_on:
+      tempo:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    profiles: ["observability"]
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - ./observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+      tempo:
+        condition: service_started
+
+volumes:
+  tempo_data:
+  prometheus_data:
+  grafana_data:

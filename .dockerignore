@@ -4,3 +4,7 @@
 .idea
 **/build
 build
+web-client/node_modules
+web-client/**/node_modules
+web-client/.turbo
+web-client/**/dist
