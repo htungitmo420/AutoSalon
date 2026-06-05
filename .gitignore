@@ -44,3 +44,11 @@ bin/
 
 ### Enviroment files ###
 .env
+
+### Web client generated files ###
+web-client/node_modules/
+web-client/**/node_modules/
+web-client/.turbo/
+web-client/**/.turbo/
+web-client/**/.vite/
+web-client/**/dist/
