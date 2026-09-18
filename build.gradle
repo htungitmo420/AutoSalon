@@ -30,7 +30,7 @@ subprojects {
     pluginManager.withPlugin('io.spring.dependency-management') {
         dependencyManagement {
             dependencies {
-                dependency 'org.bouncycastle:bcprov-jdk18on:1.84'
+                dependency 'org.bouncycastle:bcprov-jdk18on:1.85'
                 dependency 'org.apache.commons:commons-compress:1.28.0'
             }
         }
